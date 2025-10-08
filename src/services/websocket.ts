@@ -1,8 +1,8 @@
 class WebSocketService {
   private ws: WebSocket | null = null;
   private reconnectAttempts = 0;
-  private maxReconnectAttempts = 3; // Reduced to stop infinite loops
-  private reconnectDelay = 3000; // Increased delay
+  private maxReconnectAttempts = 3;
+  private reconnectDelay = 3000;
   private url: string;
   private isAuthenticated = false;
   private isWsAuthenticated = false;
@@ -39,19 +39,12 @@ class WebSocketService {
         };
 
         this.ws.onclose = (event) => {
-          console.log('WebSocket disconnected', event.code, event.reason);
+          console.log('WebSocket disconnected', event.code);
           this.isWsAuthenticated = false;
           this.notifyConnectionHandlers(false);
 
-          // More conservative reconnection - only for network errors
-          if (event.code !== 1000 && 
-              event.code !== 1001 && 
-              this.reconnectAttempts < this.maxReconnectAttempts) {
-            
-            console.log(`Will attempt reconnect in ${this.reconnectDelay}ms...`);
+          if (event.code !== 1000 && event.code !== 1001 && this.reconnectAttempts < this.maxReconnectAttempts) {
             this.scheduleReconnect();
-          } else {
-            console.log('Not reconnecting - normal close or max attempts reached');
           }
         };
 
@@ -66,21 +59,18 @@ class WebSocketService {
   }
 
   private scheduleReconnect() {
-    // Clear existing timer
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
     }
 
     this.reconnectAttempts++;
-    console.log(`Scheduling reconnect attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts}`);
+    console.log(`Reconnecting attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts}`);
     
     this.reconnectTimer = setTimeout(() => {
       this.connect()
         .then(() => {
-          // Only re-authenticate if we have stored credentials and connection is successful
           const token = localStorage.getItem('admin_token');
           if (token) {
-            console.log('Re-authenticating after reconnect');
             this.send({ type: 'authenticate', payload: { token } });
           }
         })
@@ -109,7 +99,6 @@ class WebSocketService {
   private handleMessage(message: any) {
     const { type, ...data } = message;
     
-    // Handle authentication success
     if (type === 'auth_success') {
       this.isAuthenticated = true;
       this.isWsAuthenticated = true;
@@ -118,20 +107,16 @@ class WebSocketService {
       }
     }
 
-    // Handle errors
     if (type === 'error' && data.message?.includes('authentication')) {
-      console.error('Authentication error:', data.message);
       this.isAuthenticated = false;
       this.isWsAuthenticated = false;
     }
 
-    // Notify registered handlers
     const handler = this.messageHandlers.get(type);
     if (handler) {
       handler(data);
     }
 
-    // Notify all handlers for debugging
     const allHandler = this.messageHandlers.get('*');
     if (allHandler) {
       allHandler(message);
@@ -157,9 +142,7 @@ class WebSocketService {
     });
   }
 
-  // Add method for token-based authentication
   authenticateWithToken(token: string) {
-    console.log('Authenticating with token');
     this.send({
       type: 'authenticate',
       payload: { token }
@@ -174,10 +157,16 @@ class WebSocketService {
     return this.isAuthenticated;
   }
 
+  subscribe(channel: string) {
+    this.send({
+      type: 'subscribe',
+      channel: channel
+    });
+  }
+
   disconnect() {
     console.log('Disconnecting WebSocket');
     
-    // Clear reconnect timer to prevent reconnection after manual disconnect
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
@@ -191,9 +180,12 @@ class WebSocketService {
   }
 }
 
-const wsUrl =
-  process.env.NODE_ENV === "development"
-    ? "ws://localhost:8000/admin/ws"
-    : "wss://smartbag-backend-oqlt.onrender.com/admin/ws";
+// Create and export the instance
+const wsUrl = import.meta.env.DEV
+  ? "ws://localhost:8000/admin/ws"
+  : "wss://smartbag-backend-oqlt.onrender.com/admin/ws";
 
 export const wsService = new WebSocketService(wsUrl);
+
+// Default export as well for compatibility
+export default wsService;

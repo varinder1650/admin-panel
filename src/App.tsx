@@ -20,11 +20,15 @@ import NotFound from "./pages/NotFound";
 import Help from './pages/Help';
 import Requests from './pages/Requests';
 import DiscountCoupons from "./pages/Discount";
+import { ErrorBoundary } from "@/components/common/ErrorBoundary";
+import { useSessionTimeout } from "@/hooks/useSessionTimeout";
 
 const queryClient = new QueryClient();
 
 const AppContent = () => {
   const { isAuthenticated, user } = useAuthStore();
+
+  useSessionTimeout(30);
 
   useEffect(() => {
     // Connect WebSocket once on app start
@@ -92,9 +96,11 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <AppContent />
-      </BrowserRouter>
+      <ErrorBoundary>
+        <BrowserRouter>
+          <AppContent />
+        </BrowserRouter>
+      </ErrorBoundary>
     </TooltipProvider>
   </QueryClientProvider>
 );
