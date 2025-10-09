@@ -29,7 +29,7 @@ export const OrderFilters = ({
         <SelectContent>
           <SelectItem value="all">All Statuses</SelectItem>
           <SelectItem value="preparing">Preparing</SelectItem>
-          <SelectItem value="accepted">Accepted</SelectItem>
+          <SelectItem value="assigning">Accepted</SelectItem>
           <SelectItem value="assigned">Assigned</SelectItem>
           <SelectItem value="out_for_delivery">Out for Delivery</SelectItem>
           <SelectItem value="delivered">Delivered</SelectItem>

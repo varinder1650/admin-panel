@@ -53,7 +53,7 @@ export default function Orders() {
   const statusOptions = [
     { value: "all", label: "All Orders" },
     { value: "preparing", label: "Preparing" },
-    { value: "accepted", label: "Accepted" },
+    { value: "assigning", label: "Assigning" },
     { value: "assigned", label: "Assigned" },
     { value: "out_for_delivery", label: "Out for Delivery" },
     { value: "delivered", label: "Delivered" },
