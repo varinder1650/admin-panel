@@ -12,6 +12,7 @@ interface User {
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
+  token: string | null;
   isLoading: boolean;
   error: string | null;
   setUser: (user: User) => void;
@@ -24,6 +25,7 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
+      token: null,
       isAuthenticated: false,
       isLoading: false,
       error: null,
@@ -33,7 +35,7 @@ export const useAuthStore = create<AuthState>()(
       logout: () => {
         wsService.disconnect();
         localStorage.removeItem('admin_token');
-        set({ user: null, isAuthenticated: false, error: null });
+        set({ user: null, token:null, isAuthenticated: false, error: null });
       },
     }),
     {

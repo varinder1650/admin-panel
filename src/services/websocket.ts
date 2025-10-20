@@ -15,6 +15,11 @@ class WebSocketService {
     this.url = url;
   }
 
+  // ✅ Add public getter for WebSocket instance
+  get websocket(): WebSocket | null {
+    return this.ws;
+  }
+
   connect(): Promise<void> {
     return new Promise((resolve, reject) => {
       try {

@@ -9,17 +9,43 @@ import { useToast } from "@/hooks/use-toast";
 export function DashboardLayout() {
   const { toast } = useToast();
   const store = useDashboardStore();
-  const { setConnected, setStats, setRevenueData, setRecentOrders, setProducts, setOrders, setUsers, setPricingConfig, setCategories } = store;
-  const { user } = useAuthStore();
+  const { setConnected, setWebSocket, setStats, setRevenueData, setRecentOrders, setProducts, setOrders, setUsers, setPricingConfig, setCategories } = store;
+  const { user, isAuthenticated } = useAuthStore();
 
-  const { isAuthenticated } = useAuthStore();
   useEffect(() => {
-    if (isAuthenticated) {
-    setConnected(true);
+    if (!isAuthenticated) return;
+
+    // Connect to WebSocket
+    wsService.connect()
+      .then(() => {
+        console.log('✅ WebSocket connected successfully');
+        setConnected(true);
+        
+        // Store the WebSocket instance
+        // @ts-ignore - accessing private property for state management
+        setWebSocket(wsService.ws);
+        
+        // Authenticate with token if available
+        const token = localStorage.getItem('admin_token');
+        if (token) {
+          wsService.authenticateWithToken(token);
+        }
+      })
+      .catch((error) => {
+        console.error('❌ WebSocket connection failed:', error);
+        toast({
+          title: "Connection Failed",
+          description: "Could not connect to server",
+          variant: "destructive",
+        });
+      });
 
     // Connection status handler
     wsService.onConnection((connected) => {
       setConnected(connected);
+      // @ts-ignore
+      setWebSocket(connected ? wsService.ws : null);
+      
       if (connected && wsService.isAuth()) {
         toast({
           title: "Connected",
@@ -79,7 +105,7 @@ export function DashboardLayout() {
     });
 
     wsService.onMessage('categories_data', (data) => {
-      console.log(data.categories)
+      console.log(data.categories);
       setCategories(data.categories || []);
     });
 
@@ -109,9 +135,9 @@ export function DashboardLayout() {
 
     return () => {
       wsService.disconnect();
+      setWebSocket(null);
     };
-  }
-  }, [user, toast, setConnected, setStats, setRevenueData, setRecentOrders, setProducts, setOrders, setUsers, setPricingConfig, isAuthenticated, setCategories]);
+  }, [isAuthenticated, user, toast, setConnected, setWebSocket, setStats, setRevenueData, setRecentOrders, setProducts, setOrders, setUsers, setPricingConfig, setCategories]);
 
   return (
     <div className="flex h-screen bg-background">
