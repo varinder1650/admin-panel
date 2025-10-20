@@ -40,7 +40,7 @@ interface Product {
   keywords?: string[];
   brandId?: string;
   categoryId?: string;
-  description:string;
+  description: string;
 }
 
 interface Brand {
@@ -91,7 +91,9 @@ interface PricingConfig {
 interface DashboardState {
   // Connection status
   isConnected: boolean;
+  websocket: WebSocket | null;
   setConnected: (connected: boolean) => void;
+  setWebSocket: (ws: WebSocket | null) => void;  // ✅ Add this
 
   // Dashboard data
   stats: DashboardStats;
@@ -138,10 +140,12 @@ interface DashboardState {
   deleteCategory: (id: string) => void;
 }
 
-export const useDashboardStore = create<DashboardState>((set, get) => ({
+export const useDashboardStore = create<DashboardState>((set) => ({
   // Connection status
   isConnected: false,
+  websocket: null,  // ✅ Initialize as null
   setConnected: (connected) => set({ isConnected: connected }),
+  setWebSocket: (websocket) => set({ websocket }),  // ✅ Add setter
 
   // Dashboard data
   stats: {
@@ -226,212 +230,3 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       categories: state.categories.filter((c) => c.id !== id),
     })),
 }));
-
-
-// import { create } from 'zustand';
-// import { devtools } from 'zustand/middleware';
-
-// // ===== Separate stores for better performance =====
-
-// // Products Store
-// interface ProductsState {
-//   products: Product[];
-//   isLoading: boolean;
-//   error: string | null;
-//   setProducts: (products: Product[]) => void;
-//   addProduct: (product: Product) => void;
-//   updateProduct: (id: string, updates: Partial<Product>) => void;
-//   deleteProduct: (id: string) => void;
-//   setLoading: (loading: boolean) => void;
-//   setError: (error: string | null) => void;
-// }
-
-// export const useProductsStore = create<ProductsState>()(
-//   devtools(
-//     (set) => ({
-//       products: [],
-//       isLoading: false,
-//       error: null,
-//       setProducts: (products) => set({ products, isLoading: false }),
-//       addProduct: (product) => set((state) => ({ 
-//         products: [...state.products, product] 
-//       })),
-//       updateProduct: (id, updates) => set((state) => ({
-//         products: state.products.map((p) => 
-//           p.id === id ? { ...p, ...updates } : p
-//         ),
-//       })),
-//       deleteProduct: (id) => set((state) => ({
-//         products: state.products.filter((p) => p.id !== id),
-//       })),
-//       setLoading: (isLoading) => set({ isLoading }),
-//       setError: (error) => set({ error }),
-//     }),
-//     { name: 'ProductsStore' }
-//   )
-// );
-
-// // Orders Store
-// interface OrdersState {
-//   orders: Order[];
-//   isLoading: boolean;
-//   error: string | null;
-//   setOrders: (orders: Order[]) => void;
-//   updateOrderStatus: (orderId: string, status: string) => void;
-//   setLoading: (loading: boolean) => void;
-//   setError: (error: string | null) => void;
-// }
-
-// export const useOrdersStore = create<OrdersState>()(
-//   devtools(
-//     (set) => ({
-//       orders: [],
-//       isLoading: false,
-//       error: null,
-//       setOrders: (orders) => set({ orders, isLoading: false }),
-//       updateOrderStatus: (orderId, status) => set((state) => ({
-//         orders: state.orders.map((o) =>
-//           o.id === orderId ? { ...o, status } : o
-//         ),
-//       })),
-//       setLoading: (isLoading) => set({ isLoading }),
-//       setError: (error) => set({ error }),
-//     }),
-//     { name: 'OrdersStore' }
-//   )
-// );
-
-// // Users Store
-// interface UsersState {
-//   users: User[];
-//   isLoading: boolean;
-//   error: string | null;
-//   setUsers: (users: User[]) => void;
-//   updateUserRole: (userId: string, role: string) => void;
-//   toggleUserStatus: (userId: string) => void;
-//   setLoading: (loading: boolean) => void;
-//   setError: (error: string | null) => void;
-// }
-
-// export const useUsersStore = create<UsersState>()(
-//   devtools(
-//     (set) => ({
-//       users: [],
-//       isLoading: false,
-//       error: null,
-//       setUsers: (users) => set({ users, isLoading: false }),
-//       updateUserRole: (userId, role) => set((state) => ({
-//         users: state.users.map((u) =>
-//           u.id === userId ? { ...u, role: role as any } : u
-//         ),
-//       })),
-//       toggleUserStatus: (userId) => set((state) => ({
-//         users: state.users.map((u) =>
-//           u.id === userId
-//             ? { ...u, status: u.status === 'active' ? 'inactive' : 'active' }
-//             : u
-//         ),
-//       })),
-//       setLoading: (isLoading) => set({ isLoading }),
-//       setError: (error) => set({ error }),
-//     }),
-//     { name: 'UsersStore' }
-//   )
-// );
-
-// // Stats Store (for dashboard metrics)
-// interface StatsState {
-//   stats: {
-//     totalRevenue: number;
-//     totalOrders: number;
-//     activeOrders: number;
-//     activeUsers: number;
-//     totalProducts: number;
-//   };
-//   revenueData: Array<{ date: string; revenue: number }>;
-//   isLoading: boolean;
-//   setStats: (stats: StatsState['stats']) => void;
-//   setRevenueData: (data: StatsState['revenueData']) => void;
-//   setLoading: (loading: boolean) => void;
-// }
-
-// export const useStatsStore = create<StatsState>()(
-//   devtools(
-//     (set) => ({
-//       stats: {
-//         totalRevenue: 0,
-//         totalOrders: 0,
-//         activeOrders: 0,
-//         activeUsers: 0,
-//         totalProducts: 0,
-//       },
-//       revenueData: [],
-//       isLoading: false,
-//       setStats: (stats) => set({ stats, isLoading: false }),
-//       setRevenueData: (revenueData) => set({ revenueData }),
-//       setLoading: (isLoading) => set({ isLoading }),
-//     }),
-//     { name: 'StatsStore' }
-//   )
-// );
-
-// // Brands & Categories Store
-// interface BrandsState {
-//   brands: Brand[];
-//   categories: Category[];
-//   setBrands: (brands: Brand[]) => void;
-//   setCategories: (categories: Category[]) => void;
-//   addBrand: (brand: Brand) => void;
-//   addCategory: (category: Category) => void;
-// }
-
-// export const useBrandsStore = create<BrandsState>()(
-//   devtools(
-//     (set) => ({
-//       brands: [],
-//       categories: [],
-//       setBrands: (brands) => set({ brands }),
-//       setCategories: (categories) => set({ categories }),
-//       addBrand: (brand) => set((state) => ({ 
-//         brands: [...state.brands, brand] 
-//       })),
-//       addCategory: (category) => set((state) => ({ 
-//         categories: [...state.categories, category] 
-//       })),
-//     }),
-//     { name: 'BrandsStore' }
-//   )
-// );
-
-// // ===== Selectors for optimized data access =====
-
-// // Product selectors
-// export const useActiveProducts = () => 
-//   useProductsStore((state) => state.products.filter(p => p.status === 'active'));
-
-// export const useProductsByCategory = (categoryId: string) =>
-//   useProductsStore((state) => state.products.filter(p => p.category === categoryId));
-
-// export const useLowStockProducts = (threshold: number = 10) =>
-//   useProductsStore((state) => state.products.filter(p => p.stock < threshold));
-
-// // Order selectors
-// export const useActiveOrders = () =>
-//   useOrdersStore((state) => 
-//     state.orders.filter(o => 
-//       ['preparing', 'accepted', 'assigned', 'out_for_delivery'].includes(o.status)
-//     )
-//   );
-
-// export const useOrdersByStatus = (status: string) =>
-//   useOrdersStore((state) => state.orders.filter(o => o.status === status));
-
-// export const useRecentOrders = (count: number = 10) =>
-//   useOrdersStore((state) => state.orders.slice(0, count));
-
-// // User selectors
-// export const useUsersByRole = (role: string) =>
-//   useUsersStore((state) => state.users.filter(u => u.role === role));
-
-// export const useActiveUsers = () =>
-//   useUsersStore((state) => state.users.filter(u => u.status === 'active'));
