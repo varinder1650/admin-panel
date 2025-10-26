@@ -58,6 +58,7 @@ interface TicketMessage {
 interface HelpTicket {
   _id: string;
   id: string;
+  order_id: string;
   subject: string;
   category: string;
   priority: string;
@@ -78,12 +79,14 @@ interface HelpTicket {
     created_at: string;
   };
   user_info?: {
-    name: string;
-    email: string;
-    phone: string;
-    role: string;
+    name?: string;
+    email?: string;
+    phone?: string;
+    user_phone?: string;
+    role?: string;
     created_at?: string;
   };
+  [key: string]: any; // Allow any additional fields
 }
 
 interface TicketStats {
@@ -112,6 +115,28 @@ export default function HelpSupport() {
   const [isResponding, setIsResponding] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // ✅ Helper function to safely get phone number
+  const getPhoneNumber = (ticket: HelpTicket | null): string => {
+    if (!ticket) return 'Not provided';
+    
+    console.log('🔍 Getting phone for ticket:', {
+      user_phone: ticket.user_phone,
+      'user_info?.phone': ticket.user_info?.phone,
+      'user_info?.user_phone': ticket.user_info?.user_phone,
+      phone: (ticket as any).phone,
+    });
+    
+    // Try all possible phone field locations
+    const phone = ticket.user_phone || 
+                  ticket.user_info?.phone || 
+                  ticket.user_info?.user_phone ||
+                  (ticket as any).phone ||
+                  '';
+    
+    console.log('📱 Final phone value:', phone);
+    return phone || 'Not provided';
+  };
 
   const statusOptions = [
     { value: "all", label: "All Tickets" },
@@ -170,7 +195,8 @@ export default function HelpSupport() {
     });
 
     const handleHelpTicketsData = (data: any) => {
-      console.log('Received help tickets data:', data);
+      console.log('📥 Received help tickets data:', data);
+      console.log('📥 First ticket sample:', data.tickets?.[0]);
       setHelpTickets(data.tickets || []);
       setIsLoading(false);
     };
@@ -181,8 +207,27 @@ export default function HelpSupport() {
     };
 
     const handleTicketDetailData = (data: any) => {
-      console.log('Received ticket detail:', data);
-      setSelectedTicket(data.ticket);
+      console.log('=== 📨 RECEIVED TICKET DETAIL ===');
+      console.log('Full data object:', JSON.stringify(data, null, 2));
+      console.log('Ticket object:', data.ticket);
+      console.log('user_phone field:', data.ticket?.user_phone);
+      console.log('All ticket keys:', Object.keys(data.ticket || {}));
+      
+      // Don't override - keep existing ticket data and merge
+      if (data.ticket && selectedTicket) {
+        console.log('🔄 Merging ticket data');
+        const mergedTicket = {
+          ...selectedTicket,
+          ...data.ticket,
+          // Ensure phone is preserved
+          user_phone: data.ticket.user_phone || selectedTicket.user_phone
+        };
+        console.log('✅ Merged ticket:', mergedTicket);
+        setSelectedTicket(mergedTicket);
+      } else if (data.ticket) {
+        console.log('✅ Setting new ticket');
+        setSelectedTicket(data.ticket);
+      }
     };
 
     const handleTicketUpdated = (data: any) => {
@@ -241,7 +286,7 @@ export default function HelpSupport() {
           type: 'get_help_tickets',
           filters: { status: statusFilter, priority: priorityFilter }
         });
-      }, 30000); // Refresh every 30 seconds
+      }, 30000);
     }
 
     return () => {
@@ -252,7 +297,7 @@ export default function HelpSupport() {
       wsService.onMessage("error", () => {});
       if (refreshInterval) clearInterval(refreshInterval);
     };
-  }, [toast, statusFilter, priorityFilter, autoRefresh, selectedTicket]);
+  }, [toast, statusFilter, priorityFilter, autoRefresh]);
 
   const filteredTickets = helpTickets.filter(ticket => {
     const searchTerm = searchQuery.toLowerCase();
@@ -265,6 +310,12 @@ export default function HelpSupport() {
   });
 
   const openTicketDetail = (ticket: HelpTicket) => {
+    console.log('=== 🎫 OPENING TICKET ===');
+    console.log('Full ticket object:', ticket);
+    console.log('ticket.user_phone:', ticket.user_phone);
+    console.log('ticket.user_info:', ticket.user_info);
+    console.log('All ticket keys:', Object.keys(ticket));
+    
     setSelectedTicket(ticket);
     setSelectedStatus(ticket.status);
     setAdminResponse("");
@@ -532,7 +583,7 @@ export default function HelpSupport() {
                 {filteredTickets.length > 0 ? filteredTickets.map((ticket) => (
                   <TableRow key={ticket._id} className="cursor-pointer hover:bg-muted/50">
                     <TableCell className="font-mono text-sm">
-                      #{ticket._id.slice(-6)}
+                      #{ticket._id}
                     </TableCell>
                     <TableCell className="max-w-xs">
                       <div className="truncate" title={ticket.subject}>
@@ -628,25 +679,18 @@ export default function HelpSupport() {
 
       {/* Enhanced Ticket Detail Modal */}
       <Dialog open={showTicketModal} onOpenChange={setShowTicketModal}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
-          <DialogHeader>
-            <div className="flex justify-between items-start">
-              <div>
-                <DialogTitle>Support Ticket Details</DialogTitle>
-                <DialogDescription>
-                  #{selectedTicket?._id?.slice(-8)} - {selectedTicket?.subject}
-                </DialogDescription>
-              </div>
-              <Button variant="ghost" size="sm" onClick={() => setShowTicketModal(false)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
+        <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0">
+          <DialogHeader className="px-6 pt-6 pb-4">
+            <DialogTitle>Support Ticket Details</DialogTitle>
+            <DialogDescription>
+              #{selectedTicket?._id} - {selectedTicket?.subject}
+            </DialogDescription>
           </DialogHeader>
           
           {selectedTicket && (
-            <div className="flex-1 flex gap-4 overflow-hidden">
-              {/* Left Panel - Ticket Info */}
-              <div className="w-1/3 space-y-4">
+            <div className="flex-1 flex gap-4 overflow-hidden px-6 pb-6">
+              {/* Left Panel - Ticket Info - Scrollable */}
+              <div className="w-1/3 overflow-y-auto pr-2 space-y-4">
                 <Card>
                   <CardHeader className="pb-3">
                     <CardTitle className="text-lg">Customer Information</CardTitle>
@@ -654,15 +698,17 @@ export default function HelpSupport() {
                   <CardContent className="space-y-3">
                     <div>
                       <p className="text-sm font-medium">Name</p>
-                      <p className="text-sm text-muted-foreground">{selectedTicket.user_info?.name || selectedTicket.user_name}</p>
+                      <p className="text-sm text-muted-foreground">{selectedTicket.user_name}</p>
                     </div>
                     <div>
                       <p className="text-sm font-medium">Email</p>
-                      <p className="text-sm text-muted-foreground">{selectedTicket.user_info?.email || selectedTicket.user_email}</p>
+                      <p className="text-sm text-muted-foreground">{selectedTicket.user_email}</p>
                     </div>
                     <div>
                       <p className="text-sm font-medium">Phone</p>
-                      <p className="text-sm text-muted-foreground">{selectedTicket.user_info?.phone || 'Not provided'}</p>
+                      <p className="text-sm text-muted-foreground font-mono">
+                        {getPhoneNumber(selectedTicket)}
+                      </p>
                     </div>
                     <div>
                       <p className="text-sm font-medium">Account Type</p>
@@ -726,10 +772,10 @@ export default function HelpSupport() {
                 </Button>
               </div>
 
-              {/* Right Panel - Messages */}
-              <div className="flex-1 flex flex-col">
-                <Card className="flex-1 flex flex-col">
-                  <CardHeader className="pb-3">
+              {/* Right Panel - Messages - Scrollable */}
+              <div className="flex-1 flex flex-col overflow-hidden">
+                <Card className="flex-1 flex flex-col overflow-hidden">
+                  <CardHeader className="pb-3 flex-shrink-0">
                     <CardTitle className="text-lg flex items-center gap-2">
                       <MessageSquare className="h-5 w-5" />
                       Conversation History
@@ -739,9 +785,9 @@ export default function HelpSupport() {
                     </CardDescription>
                   </CardHeader>
                   
-                  {/* Messages Container */}
-                  <CardContent className="flex-1 flex flex-col overflow-hidden">
-                    <div className="flex-1 overflow-y-auto pr-2" style={{ maxHeight: '300px' }}>
+                  {/* Messages Container - Scrollable */}
+                  <CardContent className="flex-1 flex flex-col overflow-hidden p-0">
+                    <div className="flex-1 overflow-y-auto px-6 py-4">
                       {/* Original ticket message */}
                       <div className="p-4 rounded-lg mb-3 bg-amber-50 border-l-4 border-amber-500">
                         <div className="flex justify-between items-start mb-2">
@@ -768,8 +814,8 @@ export default function HelpSupport() {
                       <div ref={messagesEndRef} />
                     </div>
 
-                    {/* Response Form */}
-                    <div className="border-t pt-4 mt-4">
+                    {/* Response Form - Fixed at bottom */}
+                    <div className="border-t px-6 py-4 flex-shrink-0">
                       <div className="space-y-3">
                         <Label htmlFor="admin-response">Your Response</Label>
                         <Textarea
