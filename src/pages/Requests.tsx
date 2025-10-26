@@ -52,6 +52,7 @@ interface UserSuggestion {
   category: string;
   priority: string;
   status: string;
+  product_name: string;
   user_name: string;
   user_email: string;
   phone: string;

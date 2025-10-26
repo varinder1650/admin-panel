@@ -14,6 +14,7 @@ import {
   LightbulbIcon,
   Store,
   Bell,
+  Bike,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -51,19 +52,9 @@ const navigation = [
     icon: ShoppingCart,
   },
   {
-    name: "Users",
-    href: "/dashboard/users",
-    icon: Users,
-  },
-  {
-    name: "Discount Coupons",
-    href: "/dashboard/discount",
-    icon: Users,
-  },
-  {
-    name: "Pricing",
-    href: "/dashboard/pricing",
-    icon: DollarSign,
+    name: "Porter Requests",
+    href: "/dashboard/porter",
+    icon: Bike,
   },
   {
     name: "Help & Suggestions",
@@ -76,9 +67,24 @@ const navigation = [
     icon: LightbulbIcon,
   },
   {
-    name: "Notifications",  // ✅ Add this
+    name: "Notifications",
     href: "/dashboard/notifications",
-    icon: Bell,  // Import Bell from lucide-react
+    icon: Bell,
+  },
+  {
+    name: "Discount Coupons",
+    href: "/dashboard/discount",
+    icon: Users,
+  },
+  {
+    name: "Pricing",
+    href: "/dashboard/pricing",
+    icon: DollarSign,
+  },
+  {
+    name: "Users",
+    href: "/dashboard/users",
+    icon: Users,
   },
 ];
 
