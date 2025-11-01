@@ -221,7 +221,13 @@ export const OrderDrawer = ({ open, onOpenChange, order }: OrderDrawerProps) => 
                       <span className="text-muted-foreground">Subtotal</span>
                       <span>{formatCurrency(order.subtotal || order.total || 0)}</span>
                     </div>
-                    {order.delivery_charge && (
+                    {/* {order.delivery_charge && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Delivery Fee</span>
+                        <span>{formatCurrency(order.delivery_charge)}</span>
+                      </div>
+                    )} */}
+                    {typeof order.delivery_charge === 'number' && (
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Delivery Fee</span>
                         <span>{formatCurrency(order.delivery_charge)}</span>
@@ -229,7 +235,7 @@ export const OrderDrawer = ({ open, onOpenChange, order }: OrderDrawerProps) => 
                     )}
                     {order.app_fee && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Service Fee</span>
+                        <span className="text-muted-foreground">App Fee</span>
                         <span>{formatCurrency(order.app_fee)}</span>
                       </div>
                     )}
@@ -245,10 +251,16 @@ export const OrderDrawer = ({ open, onOpenChange, order }: OrderDrawerProps) => 
                         <span>- {formatCurrency(order.discount)}</span>
                       </div>
                     )}
-                    {order.tip_amount && parseFloat(order.tip_amount) > 0 && (
-                      <div className="flex justify-between text-sm text-green-600">
-                        <span>Tip</span>
-                        <span>- {formatCurrency(order.tip_amount)}</span>
+                    {/* {order.tip_amount && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Tax</span>
+                        <span>{formatCurrency(order.tip_amount)}</span>
+                      </div>
+                    )} */}
+                    {typeof order.tip_amount === 'number' && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Tip</span>
+                        <span>{formatCurrency(order.tip_amount)}</span>
                       </div>
                     )}
                     <Separator className="my-2" />
