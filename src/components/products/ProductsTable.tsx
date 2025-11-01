@@ -99,7 +99,7 @@ export const ProductsTable = ({
               <TableCell className="font-medium">{product.name}</TableCell>
               <TableCell>{formatCurrency(product.price)}</TableCell>
               <TableCell>
-                <span className={product.stock < 10 ? 'text-destructive font-medium' : ''}>
+                <span className={product.stock < 1 ? 'text-destructive font-medium' : ''}>
                   {product.stock}
                 </span>
               </TableCell>

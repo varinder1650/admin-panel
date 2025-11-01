@@ -221,10 +221,10 @@ export const OrderDrawer = ({ open, onOpenChange, order }: OrderDrawerProps) => 
                       <span className="text-muted-foreground">Subtotal</span>
                       <span>{formatCurrency(order.subtotal || order.total || 0)}</span>
                     </div>
-                    {order.delivery_fee && (
+                    {order.delivery_charge && (
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Delivery Fee</span>
-                        <span>{formatCurrency(order.delivery_fee)}</span>
+                        <span>{formatCurrency(order.delivery_charge)}</span>
                       </div>
                     )}
                     {order.app_fee && (
@@ -233,10 +233,22 @@ export const OrderDrawer = ({ open, onOpenChange, order }: OrderDrawerProps) => 
                         <span>{formatCurrency(order.app_fee)}</span>
                       </div>
                     )}
+                    {order.tax && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Tax</span>
+                        <span>{formatCurrency(order.tax)}</span>
+                      </div>
+                    )}
                     {order.discount && parseFloat(order.discount) > 0 && (
                       <div className="flex justify-between text-sm text-green-600">
                         <span>Discount</span>
                         <span>- {formatCurrency(order.discount)}</span>
+                      </div>
+                    )}
+                    {order.tip_amount && parseFloat(order.tip_amount) > 0 && (
+                      <div className="flex justify-between text-sm text-green-600">
+                        <span>Tip</span>
+                        <span>- {formatCurrency(order.tip_amount)}</span>
                       </div>
                     )}
                     <Separator className="my-2" />
