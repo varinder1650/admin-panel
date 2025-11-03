@@ -187,8 +187,8 @@ class WebSocketService {
 
 // Create and export the instance
 const wsUrl = import.meta.env.DEV
-  ? "ws://localhost:8000/admin/ws"
-  : "ws://195.35.6.222/admin-api/ws";
+  ? "ws://localhost:8001/admin/ws"
+  : "ws://195.35.6.222/admin/ws";
 
 export const wsService = new WebSocketService(wsUrl);
 
