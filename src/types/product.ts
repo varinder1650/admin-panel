@@ -19,6 +19,8 @@ export interface ImageObject {
     description: string;
     created_at?: string;
     updated_at?: string;
+    allow_user_images: boolean;
+    allow_user_description: boolean;
   }
   
   export interface Brand {

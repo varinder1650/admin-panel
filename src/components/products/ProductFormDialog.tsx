@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ImageUploader } from "@/components/products/ImageUploader";
 import { Product, Brand, Category } from "@/types/product";
@@ -37,6 +38,8 @@ export const ProductFormDialog = ({
   const [images, setImages] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     name: "",
+    cost_price: "",
+    mrp: "",
     price: "",
     stock: "",
     category: "",
@@ -44,12 +47,15 @@ export const ProductFormDialog = ({
     status: "active",
     keywords: "",
     description: "",
+    allow_user_images: false,
+    allow_user_description: false,
   });
 
   useEffect(() => {
     if (product) {
       setFormData({
         name: product.name || "",
+        actual_price: product.actual_price?.toString() || "",
         price: product.price?.toString() || "",
         stock: product.stock?.toString() || "",
         category: product.category || "",
@@ -57,11 +63,14 @@ export const ProductFormDialog = ({
         status: product.status || "active",
         keywords: product.keywords?.join(', ') || "",
         description: product.description || "",
+        allow_user_images: product.allow_user_images || false,
+        allow_user_description: product.allow_user_description || false,
       });
       setImages([]);
     } else {
       setFormData({
         name: "",
+        actual_price: "",
         price: "",
         stock: "",
         category: "",
@@ -69,6 +78,8 @@ export const ProductFormDialog = ({
         status: "active",
         keywords: "",
         description: "",
+        allow_user_images: false,
+        allow_user_description: false,
       });
       setImages([]);
     }
@@ -89,6 +100,7 @@ export const ProductFormDialog = ({
 
     const data = {
       name: formData.name,
+      actual_price: formData.actual_price ? parseFloat(formData.actual_price) : null,
       price: parseFloat(formData.price),
       stock: parseInt(formData.stock),
       category: formData.category,
@@ -96,6 +108,8 @@ export const ProductFormDialog = ({
       status: formData.status,
       description: formData.description,
       keywords: formData.keywords.split(',').map(k => k.trim()).filter(Boolean),
+      allow_user_images: formData.allow_user_images,
+      allow_user_description: formData.allow_user_description,
       ...(images.length > 0 && { images }),
     };
 
@@ -117,18 +131,33 @@ export const ProductFormDialog = ({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Product Name *</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Product Name *</Label>
+              <Label htmlFor="actual_price">Actual Price (MRP) (₹)</Label>
               <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                required
+                id="actual_price"
+                type="number"
+                step="0.01"
+                value={formData.actual_price}
+                onChange={(e) => setFormData({ ...formData, actual_price: e.target.value })}
+                placeholder="Original price"
               />
+              <p className="text-xs text-muted-foreground">
+                Leave empty if no discount
+              </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="price">Price (₹) *</Label>
+              <Label htmlFor="price">Selling Price (₹) *</Label>
               <Input
                 id="price"
                 type="number"
@@ -137,6 +166,21 @@ export const ProductFormDialog = ({
                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                 required
               />
+            </div>
+            <div className="space-y-2">
+              <Label>Discount</Label>
+              <div className="h-10 flex items-center">
+                {formData.actual_price && formData.price && parseFloat(formData.actual_price) > parseFloat(formData.price) ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-bold text-green-600">
+                      {Math.round(((parseFloat(formData.actual_price) - parseFloat(formData.price)) / parseFloat(formData.actual_price)) * 100)}%
+                    </span>
+                    <span className="text-sm text-muted-foreground">OFF</span>
+                  </div>
+                ) : (
+                  <span className="text-sm text-muted-foreground">No discount</span>
+                )}
+              </div>
             </div>
           </div>
 
@@ -232,6 +276,52 @@ export const ProductFormDialog = ({
               required
               rows={4}
             />
+          </div>
+
+          {/* ✅ NEW: User Interaction Toggles */}
+          <div className="border rounded-lg p-4 space-y-4 bg-muted/50">
+            <div className="space-y-2">
+              <Label className="text-base font-semibold">Customer Interaction Options</Label>
+              <p className="text-sm text-muted-foreground">
+                Allow customers to contribute content for this product
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between space-x-4 p-3 bg-background rounded-md">
+              <div className="space-y-0.5 flex-1">
+                <Label htmlFor="allow-images" className="font-medium">
+                  Allow Customer Images
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Let customers upload product photos from their device
+                </p>
+              </div>
+              <Switch
+                id="allow-images"
+                checked={formData.allow_user_images}
+                onCheckedChange={(checked) => 
+                  setFormData({ ...formData, allow_user_images: checked })
+                }
+              />
+            </div>
+
+            <div className="flex items-center justify-between space-x-4 p-3 bg-background rounded-md">
+              <div className="space-y-0.5 flex-1">
+                <Label htmlFor="allow-description" className="font-medium">
+                  Allow Customer Reviews
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Let customers add their own product reviews and feedback
+                </p>
+              </div>
+              <Switch
+                id="allow-description"
+                checked={formData.allow_user_description}
+                onCheckedChange={(checked) => 
+                  setFormData({ ...formData, allow_user_description: checked })
+                }
+              />
+            </div>
           </div>
 
           <div className="flex justify-end gap-2 pt-4">
